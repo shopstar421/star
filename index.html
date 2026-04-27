@@ -3,102 +3,48 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>STAR STORE | المتجر الرسمي</title>
+    <title>STAR STORE</title>
     <link href="https://googleapis.com" rel="stylesheet">
     <style>
-        * { margin: 0; padding: 0; box-sizing: border-box; font-family: 'Cairo', sans-serif; }
-        body { background-color: #fcfcfc; color: #333; overflow-x: hidden; }
-        header { background: white; padding: 15px 5%; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #eee; position: sticky; top: 0; z-index: 100; }
-        .logo { font-size: 26px; font-weight: 800; letter-spacing: 3px; color: #000; text-decoration: none; }
-        .cart-icon { position: relative; cursor: pointer; font-size: 16px; font-weight: 600; background: #000; color: #fff; padding: 8px 18px; border-radius: 25px; }
-        .cart-count { position: absolute; top: -5px; right: -5px; background: #e74c3c; color: white; border-radius: 50%; padding: 2px 6px; font-size: 10px; }
-        .main-wrapper { display: flex; padding: 30px 5%; max-width: 1400px; margin: 0 auto; gap: 30px; }
-        aside { width: 220px; flex-shrink: 0; }
-        .filter-section h4 { margin-bottom: 15px; font-size: 16px; border-bottom: 2px solid #000; display: inline-block; padding-bottom: 5px; }
-        .filter-section ul { list-style: none; }
-        .filter-section ul li { margin-bottom: 12px; cursor: pointer; font-size: 14px; color: #666; transition: 0.3s; }
-        .filter-section ul li:hover { color: #000; font-weight: 600; }
-        .content { flex-grow: 1; }
-        .product-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 25px; }
-        .product-card { background: white; border-radius: 15px; overflow: hidden; border: 1px solid #eee; transition: 0.3s; position: relative; }
-        .product-img { width: 100%; height: 320px; background: #f9f9f9; position: relative; }
-        .product-img img { width: 100%; height: 100%; object-fit: cover; }
-        .product-info { padding: 15px; }
-        .btn-add-cart { width: 100%; background: #000; color: white; border: none; padding: 12px; border-radius: 8px; cursor: pointer; margin-top: 10px; font-weight: 600; }
-        .modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; padding: 20px; }
-        .modal-content { background: white; padding: 25px; border-radius: 15px; width: 100%; max-width: 550px; max-height: 90vh; overflow-y: auto; }
-        .cart-item { display: flex; align-items: center; border-bottom: 1px solid #eee; padding: 12px 0; gap: 15px; }
-        .cart-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
-        .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
-        .qty-btn { background: #eee; border: none; width: 25px; height: 25px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .sold-out-badge { position: absolute; top: 10px; left: 10px; background: #ff4d4d; color: white; padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: bold; z-index: 5; }
+        body { font-family: 'Cairo', sans-serif; background: #fcfcfc; direction: rtl; padding: 20px; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 20px; }
+        .card { background: white; padding: 15px; border-radius: 10px; border: 1px solid #eee; text-align: center; }
+        .card img { width: 100%; height: 200px; object-fit: cover; border-radius: 5px; }
+        .price { font-weight: bold; color: #27ae60; margin: 10px 0; }
     </style>
 </head>
 <body>
-    <header>
-        <a href="index.html" class="logo">STAR</a>
-        <div class="cart-icon" onclick="toggleCart()">🛒 السلة <span class="cart-count" id="cart-count">0</span></div>
-    </header>
+    <h1 style="text-align:center; margin-bottom:30px;">STAR STORE</h1>
+    <div class="grid" id="display">جاري التحميل...</div>
 
-    <div class="main-wrapper">
-        <aside>
-            <div class="filter-section">
-                <h4>الأقسام</h4>
-                <ul>
-                    <li onclick="filterProducts('all')">عرض الكل</li>
-                    <li onclick="filterProducts('إكسسوارات')">إكسسوارات</li>
-                    <li onclick="filterProducts('شنط')">شنط</li>
-                    <li onclick="filterProducts('نضارات')">نضارات</li>
-                    <li onclick="filterProducts('ملابس أطفال')">ملابس أطفال</li>
-                    <li onclick="filterProducts('ملابس حريمي')">ملابس حريمي</li>
-                    <li onclick="filterProducts('ملابس رجالي')">ملابس رجالي</li>
-                    <li onclick="filterProducts('أحذية')">أحذية</li>
-                    <li onclick="filterProducts('مستحضرات تجميل')">مستحضرات تجميل</li>
-                </ul>
-            </div>
-        </aside>
-        <main class="content">
-            <h2 id="view-title" style="margin-bottom: 25px;">أحدث الموديلات</h2>
-            <div class="product-grid" id="product-display">جاري التحميل...</div>
-        </main>
-    </div>
-
-    <!-- Firebase -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCp7tHQKY8Kd0WO0Stn3XKitstO96mJlW4",
-            databaseURL: "https://firebaseio.com"
+            databaseURL: "https://starshop-8e111-default-rtdb.firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
-        let allProducts = [];
         db.ref('products').on('value', (s) => {
-            allProducts = Object.values(s.val() || {});
-            filterProducts('all');
-        });
-
-        function filterProducts(cat) {
-            const display = document.getElementById('product-display');
+            const display = document.getElementById('display');
             display.innerHTML = "";
-            const filtered = cat === 'all' ? allProducts : allProducts.filter(p => p.category === cat);
-            filtered.forEach(p => {
+            const data = s.val() || {};
+            const items = Object.values(data);
+            if (items.length === 0) { display.innerHTML = "لا توجد منتجات حالياً."; return; }
+            
+            items.forEach(p => {
                 display.innerHTML += `
-                    <div class="product-card">
-                        ${p.soldOut ? '<div class="sold-out-badge">نفذت</div>' : ''}
-                        <div class="product-img"><img src="${p.image}" style="${p.soldOut ? 'opacity:0.5' : ''}"></div>
-                        <div class="product-info">
-                            <h3>${p.name} <small style="color:gray">(${p.code})</small></h3>
-                            <p style="font-weight:bold">${p.price} ج.م</p>
-                            <button class="btn-add-cart" ${p.soldOut ? 'disabled' : ''} onclick="alert('اطلب عبر واتساب المنتج: ${p.code}')">
-                                ${p.soldOut ? 'غير متوفر' : 'أضف للسلة'}
-                            </button>
-                        </div>
-                    </div>`;
+                <div class="card">
+                    <img src="${p.image}">
+                    <h3>${p.name}</h3>
+                    <p>كود: ${p.code}</p>
+                    <div class="price">${p.price} ج.م</div>
+                </div>`;
             });
-        }
+        });
     </script>
 </body>
 </html>
+
