@@ -1,92 +1,115 @@
 <!DOCTYPE html>
 <html lang="ar" dir="rtl">
 <head>
-<meta charset="UTF-8">
-<title>Admin</title>
-
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
-
-<style>
-body{font-family:Cairo;background:#eee;padding:20px}
-.box{max-width:700px;margin:auto;background:#fff;padding:20px}
-input{width:100%;padding:10px;margin:5px 0}
-button{width:100%;padding:10px;background:#000;color:#fff;border:none}
-table{width:100%;margin-top:20px}
-td{padding:10px;text-align:center;border-bottom:1px solid #ddd}
-</style>
+    <meta charset="UTF-8">
+    <title>لوحة التحكم</title>
+    <style>
+        body { font-family: 'Cairo', sans-serif; background: #f0f2f5; padding: 20px; direction: rtl; }
+        .admin-box { background: white; max-width: 800px; margin: auto; padding: 20px; border-radius: 10px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); }
+        input, select, button { width: 100%; padding: 10px; margin: 10px 0; border: 1px solid #ddd; border-radius: 5px; }
+        button { background: #27ae60; color: white; border: none; cursor: pointer; font-weight: bold; }
+        table { width: 100%; margin-top: 20px; border-collapse: collapse; }
+        th, td { padding: 10px; border-bottom: 1px solid #eee; text-align: center; }
+        .btn-del { background: #e74c3c; padding: 5px; font-size: 12px; }
+        .btn-toggle { background: #f39c12; padding: 5px; font-size: 12px; }
+    </style>
 </head>
-
 <body>
 
-<div class="box">
+<div class="admin-box">
+    <h2>إضافة منتج جديد</h2>
+    <input type="text" id="pName" placeholder="اسم المنتج">
+    <input type="text" id="pCode" placeholder="كود المنتج (مثلاً A1)">
+    <input type="number" id="pPrice" placeholder="السعر">
+    <input type="file" id="pImage" accept="image/*">
+    <button onclick="addProduct()">نشر المنتج في المتجر</button>
 
-<h2>إضافة منتج</h2>
-
-<input id="name" placeholder="اسم المنتج">
-<input id="price" placeholder="السعر">
-<input id="image" placeholder="رابط الصورة">
-
-<button onclick="addProduct()">إضافة</button>
-
-<table>
-<tbody id="list"></tbody>
-</table>
-
+    <hr>
+    <h3>إدارة المنتجات</h3>
+    <table id="adminTable">
+        <thead>
+            <tr>
+                <th>الصورة</th>
+                <th>الاسم</th>
+                <th>السعر</th>
+                <th>الحالة</th>
+                <th>التحكم</th>
+            </tr>
+        </thead>
+        <tbody id="adminList"></tbody>
+    </table>
 </div>
 
-<script type="module">
+<script>
+    let pass = prompt("كلمة المرور:");
+    if(pass !== "mmaahh123") { alert("خطأ!"); window.location.href="index.html"; }
 
-import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+    function addProduct() {
+        const file = document.getElementById('pImage').files[0];
+        if(!file) return alert("اختر صورة!");
+        
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const img = new Image();
+            img.onload = function() {
+                const canvas = document.createElement('canvas');
+                canvas.width = 400; canvas.height = 400;
+                canvas.getContext('2d').drawImage(img, 0, 0, 400, 400);
+                
+                const newP = {
+                    name: document.getElementById('pName').value,
+                    code: document.getElementById('pCode').value,
+                    price: document.getElementById('pPrice').value,
+                    image: canvas.toDataURL('image/jpeg', 0.7),
+                    soldOut: false
+                };
+                
+                let products = JSON.parse(localStorage.getItem('myProducts')) || [];
+                products.push(newP);
+                localStorage.setItem('myProducts', JSON.stringify(products));
+                location.reload();
+            };
+            img.src = e.target.result;
+        };
+        reader.readAsDataURL(file);
+    }
 
-const firebaseConfig = {
-apiKey: "AIzaSyCp7tHQKY8Kd0WO0Stn3XKItstO96mJlW4",
-authDomain: "starshop-8e111.firebaseapp.com",
-projectId: "starshop-8e111",
-storageBucket: "starshop-8e111.firebasestorage.app",
-messagingSenderId: "288475912502",
-appId: "1:288475912502:web:bc6281e245c7cdea9b3b97"
-};
+    function renderAdmin() {
+        const products = JSON.parse(localStorage.getItem('myProducts')) || [];
+        const list = document.getElementById('adminList');
+        list.innerHTML = "";
+        products.forEach((p, i) => {
+            list.innerHTML += `
+                <tr>
+                    <td><img src="${p.image}" width="40"></td>
+                    <td>${p.name}</td>
+                    <td>${p.price}ج</td>
+                    <td>${p.soldOut ? 'خلص' : 'متوفر'}</td>
+                    <td>
+                        <button class="btn-toggle" onclick="toggleSold(${i})">تبديل</button>
+                        <button class="btn-del" onclick="deleteP(${i})">حذف</button>
+                    </td>
+                </tr>`;
+        });
+    }
 
-const app = initializeApp(firebaseConfig);
-const db = getFirestore(app);
+    function toggleSold(i) {
+        let ps = JSON.parse(localStorage.getItem('myProducts'));
+        ps[i].soldOut = !ps[i].soldOut;
+        localStorage.setItem('myProducts', JSON.stringify(ps));
+        renderAdmin();
+    }
 
-// add
-window.addProduct = async function(){
+    function deleteP(i) {
+        if(confirm("حذف؟")) {
+            let ps = JSON.parse(localStorage.getItem('myProducts'));
+            ps.splice(i, 1);
+            localStorage.setItem('myProducts', JSON.stringify(ps));
+            renderAdmin();
+        }
+    }
 
-await addDoc(collection(db,"products"),{
-name: name.value,
-price: price.value,
-image: image.value,
-createdAt: Date.now()
-});
-
-alert("تمت الإضافة");
-}
-
-// list
-onSnapshot(collection(db,"products"), snap=>{
-const list = document.getElementById("list");
-list.innerHTML = "";
-
-snap.forEach(d=>{
-let p = d.data();
-
-list.innerHTML += `
-<tr>
-<td>${p.name}</td>
-<td>${p.price}</td>
-<td><button onclick="del('${d.id}')">حذف</button></td>
-</tr>`;
-});
-});
-
-// delete
-window.del = async function(id){
-await deleteDoc(doc(db,"products",id));
-}
-
+    window.onload = renderAdmin;
 </script>
-
 </body>
 </html>
