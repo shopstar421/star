@@ -51,27 +51,25 @@
             <div class="filter-section">
                 <h4>الأقسام</h4>
                 <ul>
-                    <li onclick="displayProducts('all')">عرض الكل</li>
-                    <li onclick="displayProducts('إكسسوارات')">إكسسوارات</li>
-                    <li onclick="displayProducts('شنط')">شنط</li>
-                    <li onclick="displayProducts('نضارات')">نضارات</li>
-                    <li onclick="displayProducts('ملابس أطفال')">ملابس أطفال</li>
-                    <li onclick="displayProducts('ملابس حريمي')">ملابس حريمي</li>
-                    <li onclick="displayProducts('ملابس رجالي')">ملابس رجالي</li>
-                    <li onclick="displayProducts('أحذية')">أحذية</li>
-                    <li onclick="displayProducts('مستحضرات تجميل')">مستحضرات تجميل</li>
+                    <li onclick="filterProducts('all')">عرض الكل</li>
+                    <li onclick="filterProducts('إكسسوارات')">إكسسوارات</li>
+                    <li onclick="filterProducts('شنط')">شنط</li>
+                    <li onclick="filterProducts('نضارات')">نضارات</li>
+                    <li onclick="filterProducts('ملابس أطفال')">ملابس أطفال</li>
+                    <li onclick="filterProducts('ملابس حريمي')">ملابس حريمي</li>
+                    <li onclick="filterProducts('ملابس رجالي')">ملابس رجالي</li>
+                    <li onclick="filterProducts('أحذية')">أحذية</li>
+                    <li onclick="filterProducts('مستحضرات تجميل')">مستحضرات تجميل</li>
                 </ul>
                 <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
-                    <p style="font-size: 12px; color: #888;">للتواصل:</p>
-
-                    <a href="https://wa.me/201105932868" target="_blank" class="wa-sidebar-link">🟢 واتساب: 01105932868</a>
+                    <a href="https://wa.me" target="_blank" class="wa-sidebar-link">🟢 واتساب الدعم</a>
                 </div>
             </div>
         </aside>
 
         <main class="content">
             <h2 id="view-title" style="margin-bottom: 25px; font-size: 22px;">أحدث الموديلات</h2>
-            <div class="product-grid" id="product-display"></div>
+            <div class="product-grid" id="product-display">جاري تحميل المنتجات...</div>
         </main>
     </div>
 
@@ -80,26 +78,17 @@
             <h3 style="margin-bottom: 15px; border-bottom: 2px solid #000;">سلة المشتريات</h3>
             <div id="cart-items-list"></div>
             <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-top:15px; display:flex; justify-content: space-between; font-weight: bold;">
-                <span>الإجمالي (شامل شحن الفيوم):</span>
+                <span>الإجمالي (شامل الشحن):</span>
                 <span><span id="total-price">0</span> ج.م</span>
             </div>
-
-            <form class="checkout-form" id="orderForm" style="margin-top: 25px;">
+            <form class="checkout-form" id="orderForm">
                 <input type="text" id="custName" placeholder="الاسم الكامل" required>
                 <input type="tel" id="custPhone" placeholder="رقم الهاتف" required>
-                <select id="governorate" onchange="updateCartUI()" required>
-                    <option value="70">الفيوم (شحن 70 ج.م ثابت)</option>
-                </select>
                 <input type="text" id="custAddr" placeholder="العنوان بالتفصيل" required>
-                <textarea id="custNote" placeholder="أي ملاحظات إضافية..." rows="2"></textarea>
-                <select id="payMethod" onchange="updatePayInfo()" required>
+                <select id="payMethod">
                     <option value="كاش">💵 دفع عند الاستلام</option>
-                    <option value="فودافون كاش / انستا باي">📱 فودافون كاش / انستا باي</option>
-                    <option value="اتصالات كاش">📱 اتصالات كاش</option>
+                    <option value="فودافون كاش">📱 فودافون كاش</option>
                 </select>
-   
-                <div id="payInstructions" style="display:none; background:#fff9c4; padding:12px; border-radius:8px; font-size:13px; margin-top:8px; border:1px dashed #fbc02d;"></div>
-                
                 <div style="display: flex; gap: 10px; margin-top: 20px;">
                     <button type="button" class="btn-add-cart" style="background: #eee; color: #333;" onclick="toggleCart()">إغلاق</button>
                     <button type="submit" class="btn-add-cart">تأكيد الطلب عبر واتساب</button>
@@ -108,113 +97,112 @@
         </div>
     </div>
 
+    <!-- Firebase SDK -->
+    <script src="https://gstatic.com"></script>
+    <script src="https://gstatic.com"></script>
+
     <script>
+        const firebaseConfig = {
+            apiKey: "AIzaSyCp7tHQKY8Kd0WO0Stn3XKitstO96mJlW4",
+            authDomain: "://firebaseapp.com",
+            databaseURL: "https://firebaseio.com",
+            projectId: "starshop-8e111",
+            storageBucket: "starshop-8e111.firebasestorage.app",
+            messagingSenderId: "288475912502",
+            appId: "1:288475912502:web:bc6281e245c7cdea9b3b97"
+        };
+        firebase.initializeApp(firebaseConfig);
+        const db = firebase.database();
 
-        let cart = JSON.parse(localStorage.getItem('STAR_SHOP_V10')) || [];
+        let allProducts = [];
+        let cart = JSON.parse(localStorage.getItem('STAR_CART_V1')) || [];
 
-        function displayProducts(filter = 'all') {
+        // جلب المنتجات من Firebase
+        db.ref('products').on('value', (snapshot) => {
+            allProducts = snapshot.val() || [];
+            filterProducts('all');
+        });
+
+        function filterProducts(category) {
             const display = document.getElementById('product-display');
-            const products = JSON.parse(localStorage.getItem('myProducts')) || [];
             display.innerHTML = "";
-            const filtered = filter === 'all' ? products : products.filter(p => p.category === filter);
-            filtered.forEach((p) => {
+            const filtered = category === 'all' ? allProducts : allProducts.filter(p => p.category === category);
+            
+            filtered.forEach((p, index) => {
                 display.innerHTML += `
                     <div class="product-card">
                         ${p.soldOut ? '<div class="sold-out-badge">نفذت الكمية</div>' : ''}
-                        <div class="product-img"><img src="${p.image}" style="${p.soldOut ? 'filter:grayscale(1); opacity:0.6' : ''}"></div>
+                        <div class="product-img"><img src="${p.image}" style="${p.soldOut ? 'filter: grayscale(1); opacity: 0.6;' : ''}"></div>
                         <div class="product-info">
-                            <h3 style="font-size:15px;">${p.name} [${p.code}]</h3>
-                            <p style="font-weight:700; margin-top:5px;">${p.price} ج.م</p>
-                            <button class="btn-add-cart" onclick="addToCart('${p.name}', ${p.price}, '${p.image}', '${p.code}')" ${p.soldOut ? 'disabled' : ''}>
+                            <h3 style="font-size: 16px; margin-bottom: 5px;">${p.name}</h3>
+                            <p style="color: #000; font-weight: 700; font-size: 18px;">${p.price} ج.م</p>
+                            <button class="btn-add-cart" ${p.soldOut ? 'disabled style="background:#ccc"' : `onclick="addToCart('${p.id}')"`}>
                                 ${p.soldOut ? 'غير متوفر' : 'أضف للسلة'}
                             </button>
                         </div>
-                    </div>`;
+                    </div>
+                `;
             });
+            document.getElementById('view-title').innerText = category === 'all' ? 'أحدث الموديلات' : category;
+            updateCartUI();
         }
 
-        function addToCart(name, price, image, code) {
-            let existing = cart.find(item => item.name === name);
-            if (existing) { existing.qty++; } else { cart.push({name, price, image, code, qty: 1}); }
-            saveCart();
+        function addToCart(id) {
+            const product = allProducts.find(p => p.id === id);
+            const inCart = cart.find(item => item.id === id);
+            if (inCart) inCart.qty++;
+            else cart.push({ ...product, qty: 1 });
+            localStorage.setItem('STAR_CART_V1', JSON.stringify(cart));
             updateCartUI();
+            alert('تمت الإضافة للسلة!');
+        }
+
+        function updateCartUI() {
+            const list = document.getElementById('cart-items-list');
+            const totalDisplay = document.getElementById('total-price');
+            const count = document.getElementById('cart-count');
+            list.innerHTML = '';
+            let total = 0;
+            let itemsCount = 0;
+
+            cart.forEach((item, index) => {
+                total += item.price * item.qty;
+                itemsCount += item.qty;
+                list.innerHTML += `
+                    <div class="cart-item">
+                        <img src="${item.image}">
+                        <div style="flex-grow:1"><h4>${item.name}</h4><p>${item.price} ج.م</p></div>
+                        <div class="qty-controls">
+                            <button class="qty-btn" onclick="changeQty(${index}, -1)">-</button>
+                            <span>${item.qty}</span>
+                            <button class="qty-btn" onclick="changeQty(${index}, 1)">+</button>
+                        </div>
+                    </div>
+                `;
+            });
+            count.innerText = itemsCount;
+            totalDisplay.innerText = cart.length > 0 ? (total + 70) : 0;
         }
 
         function changeQty(index, delta) {
             cart[index].qty += delta;
             if (cart[index].qty < 1) cart.splice(index, 1);
-            saveCart();
+            localStorage.setItem('STAR_CART_V1', JSON.stringify(cart));
             updateCartUI();
         }
 
-        function saveCart() {
-            localStorage.setItem('STAR_SHOP_V10', JSON.stringify(cart));
-        }
-
-        function updateCartUI() {
-            document.getElementById('cart-count').innerText = cart.reduce((total, item) => total + item.qty, 0);
-            const list = document.getElementById('cart-items-list');
-            list.innerHTML = "";
-            let sub = 0;
-            
-            cart.forEach((item, i) => {
-                let itemTotal = parseFloat(item.price) * item.qty;
-                sub += itemTotal;
-                list.innerHTML += `<div class="cart-item"><img src="${item.image}"><div style="flex-grow:1"><p style="font-weight:600">${item.name}</p>
-                    <b>${item.price} ج.م</b><div class="qty-controls"><button class="qty-btn" onclick="changeQty(${i}, -1)">-</button><span>${item.qty}
-                        </span>
-                        <button class="qty-btn" onclick="changeQty(${i}, 1)">+</button></div></div><b>${itemTotal} ج.م</b></div>`;
-            });
-            
-            document.getElementById('total-price').innerText = sub + 70;
-        }
-
-        function updatePayInfo() {
-            const m = document.getElementById('payMethod').value;
-            const box = document.getElementById('payInstructions');
-    
-            const myDirectWa = "https://wa.me/201105932868";
-            box.style.display = (m !== 'كاش') ? 'block' : 'none';
-            let msg = `<br>⚠️ يرجى إرسال إيصال التحويل هنا: <a href="${myDirectWa}" target="_blank" style="color:#25d366; font-weight:bold;">واتساب المتجر</a>`;
-            if(m.includes('فودافون')) box.innerHTML = `فودافون كاش / انستا باي: <b>01021354454</b>` + msg;
-            else if(m.includes('اتصالات')) box.innerHTML = `اتصالات كاش: <b>01105932868</b>` + msg;
-        }
-
         function toggleCart() {
-            const modal = document.getElementById('cartModal');
-            modal.style.display = (modal.style.display === 'flex') ? 'none' : 'flex';
+            const m = document.getElementById('cartModal');
+            m.style.display = m.style.display === 'flex' ? 'none' : 'flex';
         }
 
         document.getElementById('orderForm').onsubmit = function(e) {
             e.preventDefault();
-            if(cart.length === 0) return alert("السلة فارغة!");
-            
-            let itemsText = "";
-            cart.forEach(item => itemsText += `- ${item.name} [كود:${item.code}] (عدد:${item.qty}) = ${item.price * item.qty}ج\n`);
-            
-            const msg = `*طلب جديد من STAR STORE* 🌟\n` +
-                        `العميل: ${document.getElementById('custName').value}\n` +
-                        `الهاتف: ${document.getElementById('custPhone').value}\n` +
-                        `العنوان: ${document.getElementById('custAddr').value}\n` +
-                        `الدفع: ${document.getElementById('payMethod').value}\n` +
-                        `الملاحظات: ${document.getElementById('custNote').value || 'لا يوجد'}\n\n` +
-                        `المنتجات:\n${itemsText}\n` +
-                        `*الإجمالي النهائي:* ${document.getElementById('total-price').innerText} ج.م`;
-
-           const phoneNumber = "201105932868"; 
-
-const finalLink = "https://wa.me/" + phoneNumber + "?text=" + encodeURIComponent(msg);
-
-window.open(finalLink, '_blank');
-
-            cart = []; 
-            saveCart();
-            updateCartUI(); 
-            toggleCart();
+            let msg = `طلب جديد:\n`;
+            cart.forEach(i => msg += `- ${i.name} (الكمية: ${i.qty})\n`);
+            msg += `\nالإجمالي: ${document.getElementById('total-price').innerText} ج.م\nالاسم: ${document.getElementById('custName').value}\nالعنوان: ${document.getElementById('custAddr').value}`;
+            window.open(`https://wa.me?text=${encodeURIComponent(msg)}`, '_blank');
         };
-
-  
-        window.onload = () => { displayProducts('all'); updateCartUI(); };
     </script>
 </body>
 </html>
