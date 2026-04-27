@@ -4,15 +4,15 @@
 <meta charset="UTF-8">
 <title>Admin</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:Cairo;background:#f5f5f5;padding:20px}
-.box{max-width:800px;margin:auto;background:#fff;padding:20px}
-input,select{width:100%;padding:10px;margin:5px 0}
+body{font-family:Cairo;background:#eee;padding:20px}
+.box{max-width:700px;margin:auto;background:#fff;padding:20px}
+input{width:100%;padding:10px;margin:5px 0}
 button{width:100%;padding:10px;background:#000;color:#fff;border:none}
 table{width:100%;margin-top:20px}
-td{padding:10px;border-bottom:1px solid #eee;text-align:center}
+td{padding:10px;text-align:center;border-bottom:1px solid #ddd}
 </style>
 </head>
 
@@ -22,20 +22,11 @@ td{padding:10px;border-bottom:1px solid #eee;text-align:center}
 
 <h2>إضافة منتج</h2>
 
-<input id="name" placeholder="الاسم">
+<input id="name" placeholder="اسم المنتج">
 <input id="price" placeholder="السعر">
-<input id="image" placeholder="الصورة">
-<input id="code" placeholder="الكود">
+<input id="image" placeholder="رابط الصورة">
 
-<select id="category">
-<option>شنط</option>
-<option>ملابس حريمي</option>
-<option>ملابس رجالي</option>
-<option>إكسسوارات</option>
-<option>أحذية</option>
-</select>
-
-<button onclick="add()">إضافة</button>
+<button onclick="addProduct()">إضافة</button>
 
 <table>
 <tbody id="list"></tbody>
@@ -46,14 +37,7 @@ td{padding:10px;border-bottom:1px solid #eee;text-align:center}
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-getFirestore,
-collection,
-addDoc,
-onSnapshot,
-deleteDoc,
-doc
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, addDoc, onSnapshot, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyCp7tHQKY8Kd0WO0Stn3XKItstO96mJlW4",
@@ -67,16 +51,14 @@ appId: "1:288475912502:web:bc6281e245c7cdea9b3b97"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-// add product (مظبوط)
-window.add = async function(){
+// add
+window.addProduct = async function(){
+
 await addDoc(collection(db,"products"),{
 name: name.value,
 price: price.value,
 image: image.value,
-code: code.value,
-category: category.value,
-soldOut:false,
-createdAt:Date.now()
+createdAt: Date.now()
 });
 
 alert("تمت الإضافة");
@@ -85,10 +67,10 @@ alert("تمت الإضافة");
 // list
 onSnapshot(collection(db,"products"), snap=>{
 const list = document.getElementById("list");
-list.innerHTML="";
+list.innerHTML = "";
 
 snap.forEach(d=>{
-let p=d.data();
+let p = d.data();
 
 list.innerHTML += `
 <tr>
