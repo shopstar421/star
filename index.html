@@ -4,20 +4,15 @@
 <meta charset="UTF-8">
 <title>STAR STORE</title>
 
-<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:Cairo;background:#fafafa;margin:0}
-header{display:flex;justify-content:space-between;padding:15px;background:#fff;border-bottom:1px solid #eee}
-.container{display:flex}
-aside{width:220px;background:#fff;padding:15px}
-main{flex:1;padding:20px}
-.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:15px}
-.card{background:#fff;border-radius:10px;overflow:hidden;border:1px solid #eee}
+body{font-family:Cairo;background:#f7f7f7;margin:0}
+header{background:#fff;padding:15px;display:flex;justify-content:space-between}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px;padding:20px}
+.card{background:#fff;border-radius:10px;overflow:hidden}
 .card img{width:100%;height:200px;object-fit:cover}
 .info{padding:10px}
-.badge{background:red;color:#fff;padding:3px 8px;font-size:12px}
-li{cursor:pointer;margin:10px 0}
 </style>
 </head>
 
@@ -27,32 +22,12 @@ li{cursor:pointer;margin:10px 0}
 <div>STAR STORE</div>
 </header>
 
-<div class="container">
-
-<aside>
-<h3>الأقسام</h3>
-<li onclick="filter('all')">كل المنتجات</li>
-<li onclick="filter('شنط')">شنط</li>
-<li onclick="filter('ملابس حريمي')">ملابس حريمي</li>
-<li onclick="filter('ملابس رجالي')">ملابس رجالي</li>
-<li onclick="filter('إكسسوارات')">إكسسوارات</li>
-<li onclick="filter('أحذية')">أحذية</li>
-</aside>
-
-<main>
 <div class="grid" id="grid"></div>
-</main>
-
-</div>
 
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
-import {
-getFirestore,
-collection,
-onSnapshot
-} from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+import { getFirestore, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
 apiKey: "AIzaSyCp7tHQKY8Kd0WO0Stn3XKItstO96mJlW4",
@@ -66,16 +41,16 @@ appId: "1:288475912502:web:bc6281e245c7cdea9b3b97"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let products = [];
+const grid = document.getElementById("grid");
 
-function render(list){
-const box = document.getElementById("grid");
-box.innerHTML = "";
+onSnapshot(collection(db,"products"), snap=>{
+grid.innerHTML = "";
 
-list.forEach(p=>{
-box.innerHTML += `
+snap.forEach(doc=>{
+let p = doc.data();
+
+grid.innerHTML += `
 <div class="card">
-${p.soldOut ? `<div class="badge">نفذت</div>` : ""}
 <img src="${p.image}">
 <div class="info">
 <h4>${p.name}</h4>
@@ -83,23 +58,7 @@ ${p.soldOut ? `<div class="badge">نفذت</div>` : ""}
 </div>
 </div>`;
 });
-}
-
-// realtime
-onSnapshot(collection(db,"products"), snap=>{
-products = snap.docs.map(d=>({
-id:d.id,
-...d.data()
-}));
-
-render(products);
 });
-
-// filter
-window.filter = function(cat){
-if(cat==="all") render(products);
-else render(products.filter(p=>p.category===cat));
-}
 
 </script>
 
