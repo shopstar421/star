@@ -2,62 +2,57 @@
 <html lang="ar" dir="rtl">
 <head>
 <meta charset="UTF-8">
-<title>STAR STORE</title>
+<title>Admin</title>
 
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700&display=swap" rel="stylesheet">
 
 <style>
-body{font-family:'Cairo';background:#fafafa;margin:0}
-header{display:flex;justify-content:space-between;padding:15px;background:#fff;border-bottom:1px solid #eee}
-.logo{font-weight:bold}
-.cart{cursor:pointer;background:#000;color:#fff;padding:8px 15px;border-radius:20px}
-.container{display:flex}
-aside{width:200px;background:#fff;padding:15px;height:100vh}
-main{flex:1;padding:20px}
-.product-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:15px}
-.card{background:#fff;border:1px solid #eee;border-radius:10px;overflow:hidden}
-.card img{width:100%;height:200px;object-fit:cover}
-.card .info{padding:10px}
-.btn{background:#000;color:#fff;width:100%;padding:8px;border:none;cursor:pointer}
-li{cursor:pointer;margin:8px 0}
+body{font-family:Cairo;background:#f5f5f5;padding:20px}
+.box{max-width:800px;margin:auto;background:#fff;padding:20px}
+input,select{width:100%;padding:10px;margin:5px 0}
+button{width:100%;padding:10px;background:#000;color:#fff;border:none}
+table{width:100%;margin-top:20px}
+td{padding:10px;border-bottom:1px solid #eee;text-align:center}
 </style>
 </head>
 
 <body>
 
-<header>
-<div class="logo">STAR STORE</div>
-<div class="cart">🛒 السلة</div>
-</header>
+<div class="box">
 
-<div class="container">
+<h2>إضافة منتج</h2>
 
-<aside>
-<h3>الأقسام</h3>
-<ul>
-<li onclick="filterCat('all')">كل المنتجات</li>
-<li onclick="filterCat('شنط')">شنط</li>
-<li onclick="filterCat('ملابس حريمي')">ملابس حريمي</li>
-<li onclick="filterCat('ملابس رجالي')">ملابس رجالي</li>
-<li onclick="filterCat('إكسسوارات')">إكسسوارات</li>
-<li onclick="filterCat('أحذية')">أحذية</li>
-</ul>
-</aside>
+<input id="name" placeholder="الاسم">
+<input id="price" placeholder="السعر">
+<input id="image" placeholder="الصورة">
+<input id="code" placeholder="الكود">
 
-<main>
-<div class="product-grid" id="grid"></div>
-</main>
+<select id="category">
+<option>شنط</option>
+<option>ملابس حريمي</option>
+<option>ملابس رجالي</option>
+<option>إكسسوارات</option>
+<option>أحذية</option>
+</select>
+
+<button onclick="add()">إضافة</button>
+
+<table>
+<tbody id="list"></tbody>
+</table>
 
 </div>
 
-<!-- Firebase -->
 <script type="module">
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
 import {
 getFirestore,
 collection,
-onSnapshot
+addDoc,
+onSnapshot,
+deleteDoc,
+doc
 } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
 
 const firebaseConfig = {
@@ -72,37 +67,41 @@ appId: "1:288475912502:web:bc6281e245c7cdea9b3b97"
 const app = initializeApp(firebaseConfig);
 const db = getFirestore(app);
 
-let allProducts = [];
-
-function render(list){
-const box = document.getElementById("grid");
-box.innerHTML = "";
-
-list.forEach(p=>{
-box.innerHTML += `
-<div class="card">
-<img src="${p.image}">
-<div class="info">
-<h4>${p.name}</h4>
-<p>${p.price} ج.م</p>
-</div>
-</div>`;
+// add product (مظبوط)
+window.add = async function(){
+await addDoc(collection(db,"products"),{
+name: name.value,
+price: price.value,
+image: image.value,
+code: code.value,
+category: category.value,
+soldOut:false,
+createdAt:Date.now()
 });
+
+alert("تمت الإضافة");
 }
 
-// realtime
-onSnapshot(collection(db,"products"),(snap)=>{
-allProducts = [];
+// list
+onSnapshot(collection(db,"products"), snap=>{
+const list = document.getElementById("list");
+list.innerHTML="";
+
 snap.forEach(d=>{
-allProducts.push(d.data());
+let p=d.data();
+
+list.innerHTML += `
+<tr>
+<td>${p.name}</td>
+<td>${p.price}</td>
+<td><button onclick="del('${d.id}')">حذف</button></td>
+</tr>`;
 });
-render(allProducts);
 });
 
-// filter
-window.filterCat = function(cat){
-if(cat==="all") render(allProducts);
-else render(allProducts.filter(p=>p.category===cat));
+// delete
+window.del = async function(id){
+await deleteDoc(doc(db,"products",id));
 }
 
 </script>
