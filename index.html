@@ -31,10 +31,7 @@
         .cart-item img { width: 60px; height: 60px; object-fit: cover; border-radius: 8px; }
         .qty-controls { display: flex; align-items: center; gap: 10px; margin-top: 5px; }
         .qty-btn { background: #eee; border: none; width: 25px; height: 25px; cursor: pointer; border-radius: 5px; font-weight: bold; }
-        .checkout-form input, .checkout-form select, .checkout-form textarea { width: 100%; padding: 12px; margin: 8px 0; border: 1px solid #ddd; border-radius: 8px; outline: none; }
         .sold-out-badge { position: absolute; top: 10px; left: 10px; background: #ff4d4d; color: white; padding: 5px 12px; border-radius: 5px; font-size: 12px; font-weight: bold; z-index: 5; }
-        .wa-sidebar-link { color: #25d366; text-decoration: none; font-weight: bold; font-size: 14px; display: block; margin-top: 10px; }
-        @media (max-width: 768px) { .main-wrapper { flex-direction: column; } aside { width: 100%; } }
     </style>
 </head>
 <body>
@@ -58,58 +55,28 @@
                     <li onclick="filterProducts('أحذية')">أحذية</li>
                     <li onclick="filterProducts('مستحضرات تجميل')">مستحضرات تجميل</li>
                 </ul>
-                <div style="margin-top: 20px; border-top: 1px solid #eee; padding-top: 10px;">
-                    <a href="https://wa.me" target="_blank" class="wa-sidebar-link">🟢 واتساب الدعم</a>
-                </div>
             </div>
         </aside>
-
         <main class="content">
-            <h2 id="view-title" style="margin-bottom: 25px; font-size: 22px;">أحدث الموديلات</h2>
+            <h2 id="view-title" style="margin-bottom: 25px;">أحدث الموديلات</h2>
             <div class="product-grid" id="product-display">جاري التحميل...</div>
         </main>
     </div>
 
-    <div class="modal" id="cartModal">
-        <div class="modal-content">
-            <h3 style="margin-bottom: 15px; border-bottom: 2px solid #000;">سلة المشتريات</h3>
-            <div id="cart-items-list"></div>
-            <div style="background: #f9f9f9; padding: 15px; border-radius: 10px; margin-top:15px; display:flex; justify-content: space-between; font-weight: bold;">
-                <span>الإجمالي:</span>
-                <span><span id="total-price">0</span> ج.م</span>
-            </div>
-            <form class="checkout-form" id="orderForm">
-                <input type="text" id="custName" placeholder="الاسم الكامل" required>
-                <input type="tel" id="custPhone" placeholder="رقم الهاتف" required>
-                <input type="text" id="custAddr" placeholder="العنوان بالتفصيل" required>
-                <div style="display: flex; gap: 10px; margin-top: 20px;">
-                    <button type="button" class="btn-add-cart" style="background: #eee; color: #333;" onclick="toggleCart()">إغلاق</button>
-                    <button type="submit" class="btn-add-cart">تأكيد عبر واتساب</button>
-                </div>
-            </form>
-        </div>
-    </div>
-
+    <!-- Firebase -->
     <script src="https://gstatic.com"></script>
     <script src="https://gstatic.com"></script>
     <script>
         const firebaseConfig = {
             apiKey: "AIzaSyCp7tHQKY8Kd0WO0Stn3XKitstO96mJlW4",
-            authDomain: "://firebaseapp.com",
-            databaseURL: "https://firebaseio.com",
-            projectId: "starshop-8e111",
-            storageBucket: "starshop-8e111.firebasestorage.app",
-            messagingSenderId: "288475912502",
-            appId: "1:288475912502:web:bc6281e245c7cdea9b3b97"
+            databaseURL: "https://firebaseio.com"
         };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
 
         let allProducts = [];
-        let cart = JSON.parse(localStorage.getItem('STAR_CART')) || [];
-
         db.ref('products').on('value', (s) => {
-            allProducts = s.val() || [];
+            allProducts = Object.values(s.val() || {});
             filterProducts('all');
         });
 
@@ -123,58 +90,15 @@
                         ${p.soldOut ? '<div class="sold-out-badge">نفذت</div>' : ''}
                         <div class="product-img"><img src="${p.image}" style="${p.soldOut ? 'opacity:0.5' : ''}"></div>
                         <div class="product-info">
-                            <h3 style="font-size:14px">${p.name} <small style="color:#888">(${p.code})</small></h3>
+                            <h3>${p.name} <small style="color:gray">(${p.code})</small></h3>
                             <p style="font-weight:bold">${p.price} ج.م</p>
-                            <button class="btn-add-cart" ${p.soldOut ? 'disabled' : `onclick="addToCart('${p.id}')"`}>${p.soldOut ? 'غير متوفر' : 'أضف للسلة'}</button>
+                            <button class="btn-add-cart" ${p.soldOut ? 'disabled' : ''} onclick="alert('اطلب عبر واتساب المنتج: ${p.code}')">
+                                ${p.soldOut ? 'غير متوفر' : 'أضف للسلة'}
+                            </button>
                         </div>
                     </div>`;
             });
-            document.getElementById('view-title').innerText = cat === 'all' ? 'أحدث الموديلات' : cat;
-            updateUI();
         }
-
-        function addToCart(id) {
-            const p = allProducts.find(x => x.id === id);
-            const item = cart.find(x => x.id === id);
-            if(item) item.qty++; else cart.push({...p, qty: 1});
-            localStorage.setItem('STAR_CART', JSON.stringify(cart));
-            updateUI();
-            alert("تمت الإضافة!");
-        }
-
-        function updateUI() {
-            const list = document.getElementById('cart-items-list');
-            let total = 0; let count = 0; list.innerHTML = "";
-            cart.forEach((item, i) => {
-                total += item.price * item.qty; count += item.qty;
-                list.innerHTML += `<div class="cart-item">
-                    <img src="${item.image}">
-                    <div style="flex-grow:1"><h4>${item.name}</h4><p>${item.price} ج.م</p></div>
-                    <div class="qty-controls">
-                        <button class="qty-btn" onclick="changeQty(${i},-1)">-</button>
-                        <span>${item.qty}</span>
-                        <button class="qty-btn" onclick="changeQty(${i},1)">+</button>
-                    </div>
-                </div>`;
-            });
-            document.getElementById('cart-count').innerText = count;
-            document.getElementById('total-price').innerText = cart.length > 0 ? (total + 70) : 0;
-        }
-
-        function changeQty(i, d) {
-            cart[i].qty += d; if(cart[i].qty < 1) cart.splice(i,1);
-            localStorage.setItem('STAR_CART', JSON.stringify(cart)); updateUI();
-        }
-
-        function toggleCart() { const m = document.getElementById('cartModal'); m.style.display = m.style.display === 'flex' ? 'none' : 'flex'; }
-
-        document.getElementById('orderForm').onsubmit = function(e) {
-            e.preventDefault();
-            let msg = `طلب جديد:\n`;
-            cart.forEach(i => msg += `- ${i.name} (كود:${i.code}) (كمية:${i.qty})\n`);
-            msg += `\nالإجمالي: ${document.getElementById('total-price').innerText} ج.م\nالاسم: ${document.getElementById('custName').value}\nالعنوان: ${document.getElementById('custAddr').value}`;
-            window.open(`https://wa.me?text=${encodeURIComponent(msg)}`, '_blank');
-        };
     </script>
 </body>
 </html>
